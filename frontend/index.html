@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Car Sales Predictor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 560px; margin: 40px auto; }
+    label { display:block; margin: 8px 0 4px; }
+    input { width: 100%; padding: 8px; box-sizing: border-box; }
+    button { margin-top: 16px; padding: 10px 14px; cursor: pointer; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    #out { margin-top: 18px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h2>Car Sales Predictor (XGBoost)</h2>
+  <p>Enter the last 6 months of sales (lag_1 is most recent month):</p>
+
+  <div class="row">
+    <div><label for="lag1">lag_1</label><input id="lag1" type="number" step="any"></div>
+    <div><label for="lag2">lag_2</label><input id="lag2" type="number" step="any"></div>
+    <div><label for="lag3">lag_3</label><input id="lag3" type="number" step="any"></div>
+    <div><label for="lag4">lag_4</label><input id="lag4" type="number" step="any"></div>
+    <div><label for="lag5">lag_5</label><input id="lag5" type="number" step="any"></div>
+    <div><label for="lag6">lag_6</label><input id="lag6" type="number" step="any"></div>
+  </div>
+
+  <button id="btn">Predict</button>
+  <div id="out"></div>
+
+  <script>
+    async function predict() {
+      const vals = [
+        Number(document.getElementById('lag1').value),
+        Number(document.getElementById('lag2').value),
+        Number(document.getElementById('lag3').value),
+        Number(document.getElementById('lag4').value),
+        Number(document.getElementById('lag5').value),
+        Number(document.getElementById('lag6').value)
+      ];
+
+      // Basic check: all six values present
+      if (vals.some(v => Number.isNaN(v))) {
+        document.getElementById('out').textContent = 'Please enter all six lag values.';
+        return;
+      }
+
+      try {
+        const res = await fetch('/predict', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ features: vals })
+        });
+        const data = await res.json();
+        if ('prediction' in data) {
+          document.getElementById('out').textContent = 'Predicted Sales: ' + data.prediction.toFixed(1);
+        } else {
+          document.getElementById('out').textContent = 'Error: ' + JSON.stringify(data);
+        }
+      } catch (e) {
+        document.getElementById('out').textContent = 'Network error: ' + e;
+      }
+    }
+
+    document.getElementById('btn').addEventListener('click', predict);
+  </script>
+</body>
+</html>
